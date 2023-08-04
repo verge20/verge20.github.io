@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="zh" manifest="watermark.manifest">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>证件照水印</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            background-color: #f2f2f2;
+            -webkit-tap-highlight-color: transparent;
+            font-family: "Avenir", Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        main {
+            display: flex;
+            flex-direction: row-reverse;
+            justify-content: flex-end;
+            height: 100vh;
+        }
+
+        #main-content {
+            padding: 10px;
+            max-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+        }
+
+        #sider {
+            width: 300px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .canvas {
+            width: auto;
+            height: auto;
+            max-width: 100%;
+            max-height: 100%;
+            line-height: 1.2;
+            display: block;
+            box-shadow: 0 0 10px rgba(182, 166, 166, 0.3);
+        }
+
+
+        .settings-panel {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(182, 166, 166, 0.1);
+            padding-left: 10px;
+            margin: 20px 0;
+        }
+
+        .item-split {
+            border-right: 1px solid #e5e5e5ac;
+            height: 20px;
+        }
+
+
+        .color {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+        }
+
+        .color .item {
+            width: 20px;
+            height: 20px;
+            overflow: hidden;
+            border-radius: 50%;
+            box-shadow: 0 0 10px 5px rgba(182, 166, 166, 0.2);
+            transition: all ease .2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+
+        .color-input {
+            width: 25px;
+            height: 25px;
+            background-image: conic-gradient(red, #ff4d00, #ff9900, #ffe600, #ccff00, #80ff00, #33ff00, #00ff1a, #00ff66, #00ffb3, cyan, #00b3ff, #0066ff, #001aff, #3300ff, #8000ff, #cc00ff, #ff00e6, #ff0099, #ff004d, red);
+        }
+
+        input[type="color"] {
+            border: 1px solid black;
+            height: 70%;
+            width: 70%;
+            border-radius: 50%;
+            overflow: hidden;
+            padding: 0;
+            margin: 0;
+        }
+
+
+        input {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 100%;
+            border: none;
+            outline: none;
+            margin: 0;
+            font-size: 14px;
+            padding: 0;
+        }
+
+        ul.settings-item {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        ul.settings-item li {
+            list-style: none;
+            display: flex;
+            position: relative;
+            padding: 5px 10px 5px 0;
+            align-items: center;
+        }
+
+        ul.settings-item li .label {
+            width: 20%;
+            font-size: 14px;
+            color: #666;
+
+        }
+
+        .item.active {
+            height: 25px;
+            width: 25px;
+        }
+
+        ul.settings-item li .content {
+            flex: 1;
+            display: flex;
+            position: relative;
+            align-items: center;
+            min-height: 30px;
+        }
+
+        ul.settings-item li+li::after {
+            position: absolute;
+            box-sizing: border-box;
+            content: ' ';
+            pointer-events: none;
+            right: 0;
+            top: 0;
+            left: 0;
+            border-top: 1px solid #ebedf0;
+            /* border-top: 1px solid red; */
+            transform: scaleY(0.5);
+        }
+
+        input[type="range"] {
+            height: 20px;
+            width: 100%;
+            margin: 0;
+            border: none;
+            color: white;
+            background: transparent;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            background-color: #fff;
+            border-radius: 50%;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            border: none;
+            margin-top: -12px;
+        }
+
+        input[type="file"] {
+            cursor: pointer;
+            width: 100%;
+            font-size: 1rem;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        input[type="file"]::file-selector-button {
+            padding: 10px;
+            border-color: inherit;
+            border-style: solid;
+            border-width: 0;
+            border-inline-end-width: 1px;
+        }
+
+        input[type="range"]::focus {
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-runnable-track {
+            cursor: pointer;
+            height: 2px;
+            background-color: #e5e5e5;
+            border-radius: 2px;
+
+        }
+
+
+        .tips {
+            color: #ff2f92;
+            font-size: 12px;
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        #submit {
+            display: block;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            border: none;
+            color: #f3f3f3;
+            background: #4F69F8;
+            height: 35px;
+            font-size: 16px;
+            border-radius: 15px;
+            border: none;
+            outline: none;
+            width: 80%;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 767px) {
+            main {
+                flex-direction: column;
+                justify-content: flex-start;
+            }
+
+            #main-content {
+                max-height: 60vh;
+            }
+
+            #sider {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main>
+        <div id="main-content">
+            <img src="" class="canvas" style="display: none" id="image" alt="">
+        </div>
+        <div id="sider">
+            <input type="file" id="fileInput" accept="image/*">
+            <div class="settings-panel">
+                <ul class="settings-item">
+                    <li>
+                        <label for="textInput" class="label">水印</label>
+                        <div class="content input">
+                            <input id="textInput" type="text" placeholder="请输入文本" name="text" value="仅供xxx使用">
+                        </div>
+                    </li>
+                    <li>
+                        <label for="fontSizeInput" class="label">字号</label>
+                        <div class="content">
+                            <input id="fontsizeInput" min="-50" max="100" value="0" name="font-size" type="range">
+                        </div>
+                    </li>
+                    <li>
+                        <label for="gutterInput" class="label">间隔</label>
+                        <div class="content">
+                            <input id="gutterInput" min="0" max="1000" value="20" name="gutter" type="range">
+                        </div>
+                    </li>
+                    <li>
+                        <label for="transparencyInput" class="label">透明度</label>
+                        <div class="content">
+                            <input id="transparencyInput" min="0" max="100" value="30" name="transparency" type="range">
+                        </div>
+                    </li>
+                    <li>
+                        <label for="rotateInput" class="label">角度</label>
+                        <div class="content">
+                            <input id="rotateInput" min="-180" max="180" name="rotate" value="-45" type="range">
+                        </div>
+                    </li>
+                    <li>
+                        <label for="colorInput" class="label">颜色</label>
+                        <div id="color-selector" class="content color">
+                            <div data-color="#000000" class="item active" style="background: #000000"></div>
+                            <div data-color="#ff2600" class="item" style="background: #ff2600"></div>
+                            <div data-color="#0433ff" class="item" style="background: #0433ff"></div>
+                            <div data-color="#00f900" class="item" style="background: #00f900"></div>
+                            <div data-color="#fffb00" class="item" style="background: #fffb00"></div>
+                            <div data-color="#ffffff" class="item" style="background: #ffffff"></div>
+                            <div class="item-split"></div>
+                            <div class="item color-input"><input id="colorInput" style="opacity: 0;" name="color"
+                                    type="color" value="#000000"></div>
+                        </div>
+                    </li>
+                </ul>
+
+            </div>
+            <div class="submit">
+                <button id="submit">生成图片</button>
+            </div>
+            <div id="tips" class="tips">本工具无任何网络请求，请放心使用</div>
+        </div>
+    </main>
+    <script>
+        class WaterMarker {
+            constructor(img) {
+                this.img = img;
+                this.width = img.width;
+                this.height = img.height;
+                this.fontSize = 0;
+                this.standardFontSize = 0;
+                this.color = '#000';
+                this.gutter = 20;
+                this.rotate = -45;
+                this.color = '';
+                this.transparency = 30;
+                this.context = null;
+                this.export = false;
+                this.blobUrl = '';
+            }
+
+            init() {
+                // 基准字体
+                this.standardFontSize = Math.round(this.height / 15);
+                this.standardFontSize = this.standardFontSize >= 15 ? this.standardFontSize : 15;
+                this._createCanvas();
+                this._initElements();
+                this._bindEvent();
+                this._drawText();
+            }
+
+            _createCanvas() {
+                const canvas = document.createElement('canvas');
+                canvas.width = this.width;
+                canvas.height = this.height;
+                canvas.classList.add('canvas');
+                const context = canvas.getContext('2d');
+                context.drawImage(this.img, 0, 0);
+                this.canvas = canvas;
+                this.context = context;
+                this.mainElement = document.getElementById('main-content');
+                this.mainElement.insertBefore(canvas, this.mainElement.firstElementChild);
+            }
+
+            _initElements() {
+                this.textInput = document.getElementsByName('text')[0];
+                this.fontSizeInput = document.getElementsByName('font-size')[0];
+                this.gutterInput = document.getElementsByName('gutter')[0];
+                this.transparencyInput = document.getElementsByName('transparency')[0];
+                this.rotateInput = document.getElementsByName('rotate')[0];
+                this.colorInput = document.getElementsByName('color')[0];
+                this.button = document.getElementById('submit');
+                this.tips = document.getElementById('tips');
+                this.image = document.getElementById('image');
+                this.colorSelector = document.getElementById('color-selector');
+            }
+
+            _resetCanvas() {
+                this.context.setTransform(1, 0, 0, 1, 0, 0);
+                this.context.globalAlpha = 1;
+                this.context.clearRect(0, 0, this.width, this.height);
+                this.context.drawImage(this.img, 0, 0);
+            }
+
+            _drawText() {
+                this._resetCanvas();
+                const angel = (this.rotate * Math.PI) / 180;
+                const cosA = Math.abs(Math.cos(angel));
+                const sinA = Math.abs(Math.sin(angel));
+                const newH = this.width * sinA + this.height * cosA;
+                const newW = this.width * cosA + this.height * sinA;
+                this.context.translate(this.width / 2, this.height / 2);
+                this.context.rotate(angel);
+                this.context.translate(- this.width / 2, - this.height / 2);
+                this.text = this.textInput.value.trim().replace(/\n\r/g, '') + '  ';
+                this.context.globalAlpha = +this.transparency / 100;
+                // Set Font Style
+                let fontSize = this.standardFontSize * (1 + (this.fontSize / 50));
+                fontSize = fontSize >= 12 ? fontSize : 12;
+                this.context.font = `${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif`;
+
+                const textWidth = this.context.measureText(this.text).width;
+                this.context.fillStyle = this.color;
+                // line-height
+                let gutter = (this.gutter / 100) * fontSize;
+                const textHeight = (fontSize * 1.2 + this.gutter);
+                const xOver = Math.ceil(((newW - this.width) / textWidth) / 2);
+                const yOver = Math.ceil(((newH - this.height) / textHeight) / 2);
+                const yStep = Math.ceil(newH / textHeight);
+                const xStep = Math.ceil(newW / textWidth);
+                for (let i = -xOver; i <= xStep + xOver; i++) {
+                    for (let j = -yOver; j <= yStep + yOver; j++) {
+                        if (i !== 0 || j !== 0) {
+                            this.context.fillText(this.text, i * textWidth, j * textHeight)
+                        }
+                    }
+                }
+            }
+
+            _bindEvent() {
+                this.textInputCallback = this._valueChange('text').bind(this);
+                this.fontSizeInputCallback = this._valueChange('fontSize').bind(this);
+                this.gutterInputCallback = this._valueChange('gutter').bind(this);
+                this.transparencyInputCallback = this._valueChange('transparency').bind(this);
+                this.rotateInputCallback = this._valueChange('rotate').bind(this);
+                this.colorInputCallback = this._valueChange('color', true).bind(this);
+                this.colorChangeCallback = this.colorChange.bind(this);
+                this.submitCallback = this._createImage.bind(this);
+                this.button.addEventListener('click', this.submitCallback);
+
+                this.textInput.addEventListener('change', this.textInputCallback);
+                this.fontSizeInput.addEventListener('change', this.fontSizeInputCallback);
+                this.gutterInput.addEventListener('change', this.gutterInputCallback);
+                this.transparencyInput.addEventListener('change', this.transparencyInputCallback);
+                this.rotateInput.addEventListener('change', this.rotateInputCallback);
+                this.colorInput.addEventListener('change', this.colorInputCallback);
+                this.colorSelector.addEventListener('click', this.colorChangeCallback);
+            }
+
+
+            colorChange(event) {
+                const color = event.target.dataset.color
+                if (!color) {
+                    return;
+                }
+                this.color = color;
+                this._toggleColorElementsActive(false, color);
+                this._drawText();
+            }
+
+            _resetImage() {
+                this.image.src = '';
+                this.image.style.display = 'none';
+                if (this.blobUrl) {
+                    URL.revokeObjectURL(this.blobUrl);
+                    this.blobUrl = '';
+                }
+                this.button.innerText = '生成图片';
+                this.tips.innerText = '本工具无任何网络请求，请放心使用';
+                this.export = false;
+            }
+
+            _createImage(evnet) {
+                if (this.export) {
+                    this.canvas.style.display = 'block';
+                    this._resetImage()
+                    return;
+                }
+                this.canvas.toBlob(blob => {
+                    this.blobUrl = URL.createObjectURL(blob);
+                    this.image.src = this.blobUrl;
+                    this.image.onload = () => {
+                        this.canvas.style.display = 'none';
+                        this.image.style.display = 'block';
+                        this.export = true;
+                        this.button.innerText = '重新修改';
+                        this.tips.innerText = '请长按图片点击存储以保存到相册';
+                    }
+
+                }, 'image/png');
+
+            };
+
+
+            _toggleColorElementsActive(input = false, color = '') {
+                this.colorInput.parentNode.classList.toggle('active', input);
+
+                for (let child of this.colorSelector.children) {
+                    if (!child.dataset.color) {
+                        continue;
+                    }
+                    if (!input) {
+                        child.classList.toggle('active', child.dataset.color === color)
+                    } else {
+                        child.classList.remove('active');
+                    }
+                }
+            }
+
+
+            _valueChange(prop, color = false) {
+                return (event) => {
+                    let value = event.target.value;
+                    if (event.target.type === "range") {
+                        value = +value;
+                    }
+                    if (color) {
+                        this.colorInput.style.removeProperty('opacity');
+                        this._toggleColorElementsActive(true);
+                    }
+                    this[prop] = value;
+                    this._drawText();
+                }
+            }
+            destroy() {
+                if (this.canvas && this.canvas.parentNode) {
+                    this.canvas.parentNode.removeChild(this.canvas);
+                }
+                this._resetImage()
+
+                this.button.removeEventListener('click', this.submitCallback);
+                this.textInput.removeEventListener('change', this.textInputCallback);
+                this.fontSizeInput.removeEventListener('change', this.fontSizeInputCallback);
+                this.gutterInput.removeEventListener('change', this.gutterInputCallback);
+                this.transparencyInput.removeEventListener('change', this.transparencyInputCallback);
+                this.rotateInput.removeEventListener('change', this.rotateInputCallback);
+                this.colorInput.removeEventListener('change', this.colorInputCallback);
+                this.colorSelector.removeEventListener('click', this.colorChangeCallback);
+            }
+        };
+
+        let waterMarker;
+        const fileInput = document.getElementById('fileInput');
+        fileInput.addEventListener('change', (event) => {
+            const selectedFile = event.target.files[0];
+            if (selectedFile) {
+                const reader = new FileReader();
+
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = () => {
+                        if (waterMarker) {
+                            waterMarker.destroy();
+                        }
+                        waterMarker = new WaterMarker(img);
+                        waterMarker.init();
+                    };
+                };
+
+                reader.readAsDataURL(selectedFile);
+            }
+        });
+
+    </script>
+</body>
+
+</html>

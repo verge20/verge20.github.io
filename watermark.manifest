@@ -1,0 +1,14 @@
+CACHE MANIFEST
+# v1
+
+# 需要缓存的资源
+CACHE:
+index.html
+
+# 需要在线获取的资源
+NETWORK:
+*
+
+# 如果无法访问在线资源，使用缓存的资源
+FALLBACK:
+/ offline.html
