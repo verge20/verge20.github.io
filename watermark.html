@@ -465,19 +465,7 @@
                     this._resetImage()
                     return;
                 }
-                this.canvas.toBlob(blob => {
-                    this.blobUrl = URL.createObjectURL(blob);
-                    this.image.src = this.blobUrl;
-                    this.image.onload = () => {
-                        this.canvas.style.display = 'none';
-                        this.image.style.display = 'block';
-                        this.export = true;
-                        this.button.innerText = '重新修改';
-                        this.tips.innerText = '请长按图片点击存储以保存到相册';
-                    }
-
-                }, 'image/png');
-
+                this.canvas.toBlob(blob => { const reader = new FileReader(); reader.onloadend = () => { const base64data = reader.result; this.image.src = base64data; this.image.onload = () => { this.canvas.style.display = 'none'; this.image.style.display = 'block'; this.export = true; this.button.innerText = '重新修改'; this.tips.innerText = '请长按图片点击存储以保存到相册'; } } reader.readAsDataURL(blob); }, 'image/png'); 
             };
 
 
